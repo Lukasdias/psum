@@ -10,6 +10,8 @@ if [ $# -eq 0 ]; then
 fi
 
 VERSION_TYPE=$1
+FORCE=${2:-false}
+
 current_version=$(node -p "require('./package.json').version")
 echo "Current version: $current_version"
 
@@ -42,7 +44,18 @@ echo "Bumping to: $new_version"
 sed -i "s/\"version\": \"$current_version\"/\"version\": \"$new_version\"/" package.json
 
 git add package.json
-git commit -m "chore: release v$new_version"
+git commit -m "chore: release v$new_version" || true
+
+if git rev-parse "v$new_version" >/dev/null 2>&1; then
+  if [ "$FORCE" = "--force" ] || [ "$FORCE" = "-f" ]; then
+    echo "Tag v$new_version exists, deleting..."
+    git tag -d "v$new_version"
+  else
+    echo "Tag v$new_version already exists. Use --force to recreate"
+    exit 1
+  fi
+fi
+
 git tag "v$new_version"
 
 echo "Pushing to origin..."
