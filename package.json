@@ -1,20 +1,36 @@
 {
   "name": "psum",
   "version": "0.1.0",
-  "description": "Project Structure Summarizer - Fast, AI-optimized codebase overview",
-  "module": "src/cli.ts",
+  "description": "A CLI tool for generating structured codebase summaries",
+  "module": "dist/cli.js",
   "type": "module",
+  "main": "dist/cli.js",
   "bin": {
     "psum": "./dist/cli.js"
   },
+  "files": [
+    "dist",
+    "README.md",
+    "LICENSE"
+  ],
   "scripts": {
     "dev": "bun run src/cli.ts",
     "build": "bun run build.ts",
     "compile": "bun build --compile --outfile=./dist/psum src/cli.ts",
     "typecheck": "tsc --noEmit",
     "test": "bun test",
-    "test:watch": "bun test --watch"
+    "test:watch": "bun test --watch",
+    "release": "./scripts/release.sh"
   },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/Lukasdias/psum.git"
+  },
+  "author": "Lukasdias",
+  "bugs": {
+    "url": "https://github.com/Lukasdias/psum/issues"
+  },
+  "homepage": "https://github.com/Lukasdias/psum#readme",
   "dependencies": {
     "commander": "^12.0.0",
     "fast-glob": "^3.3.2",
@@ -30,7 +46,9 @@
     "project-structure",
     "codebase-analyzer",
     "dependency-graph",
-    "ai-tool"
+    "code-analysis",
+    "developer-tools",
+    "static-analysis"
   ],
   "license": "MIT",
   "engines": {
