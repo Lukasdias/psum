@@ -78,20 +78,20 @@ export async function detectEntryPoints(root: string): Promise<EntryPoint[]> {
 }
 
 export function categorizeEntryPoint(path: string): EntryPoint['type'] {
-  const basename = path.split('/').pop()?.toLowerCase() || '';
-  
-  if (basename.includes('cli') || basename.includes('bin') || basename.includes('cmd')) {
-    return 'cli';
+  const basename = path.split('/').pop()?.toLowerCase() || ''
+
+  if (/\b(cli|bin|cmd)\b/.test(basename)) {
+    return 'cli'
   }
-  if (basename.includes('server') || basename.includes('api') || basename.includes('handler')) {
-    return 'server';
+  if (/\b(server|api|handler)\b/.test(basename)) {
+    return 'server'
   }
-  if (basename.includes('client') || basename.includes('browser') || basename.includes('page')) {
-    return 'client';
+  if (/\b(client|browser|page)\b/.test(basename)) {
+    return 'client'
   }
-  if (basename.includes('index') || basename.includes('lib') || basename.includes('main')) {
-    return 'library';
+  if (/\b(index|lib|main)\b/.test(basename)) {
+    return 'library'
   }
-  
-  return 'unknown';
+
+  return 'unknown'
 }

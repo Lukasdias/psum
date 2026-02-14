@@ -11,7 +11,9 @@
     "dev": "bun run src/cli.ts",
     "build": "bun run build.ts",
     "compile": "bun build --compile --outfile=./dist/psum src/cli.ts",
-    "typecheck": "tsc --noEmit"
+    "typecheck": "tsc --noEmit",
+    "test": "bun test",
+    "test:watch": "bun test --watch"
   },
   "dependencies": {
     "commander": "^12.0.0",
