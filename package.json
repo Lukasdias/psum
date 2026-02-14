@@ -24,7 +24,7 @@
   },
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/Lukasdias/psum.git"
+    "url": "git@github.com:Lukasdias/psum.git"
   },
   "author": "Lukasdias",
   "bugs": {
