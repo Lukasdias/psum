@@ -1,6 +1,7 @@
 import type { Module } from '../types.js';
+import { extractModuleExports } from './exports.js';
 import { readdir, stat } from 'node:fs/promises';
-import { join, basename } from 'node:path';
+import { join } from 'node:path';
 
 const SOURCE_DIRS = ['src', 'lib', 'app', 'packages', 'core', 'modules'];
 
@@ -15,6 +16,17 @@ export async function detectModules(root: string, depth: number = 2): Promise<Mo
       if (stats.isDirectory()) {
         const subdirs = await scanDirectory(fullPath, root, depth, scannedPaths);
         modules.push(...subdirs);
+      }
+    } catch {
+    }
+  }
+
+  for (const module of modules) {
+    const moduleFullPath = join(root, module.path);
+    try {
+      const stats = await stat(moduleFullPath);
+      if (stats.isDirectory()) {
+        module.exports = await extractModuleExports(moduleFullPath, root);
       }
     } catch {
     }

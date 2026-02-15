@@ -1,4 +1,4 @@
-import type { ProjectSummary } from '../types.js';
+import type { ProjectSummary, ExportInfo } from '../types.js';
 
 export function formatMarkdown(summary: ProjectSummary): string {
   const lines: string[] = [];
@@ -29,8 +29,41 @@ export function formatMarkdown(summary: ProjectSummary): string {
       if (mod.dependencies.length > 0) {
         lines.push(`- Dependencies: ${mod.dependencies.join(', ')}`);
       }
+
+      if (mod.exports.length > 0) {
+        lines.push('');
+        lines.push('#### Public API');
+        lines.push('');
+        const exportsByType = groupExportsByType(mod.exports);
+        for (const [type, exports] of Object.entries(exportsByType)) {
+          if (exports.length > 0) {
+            lines.push(`**${capitalize(type)}s**: ${exports.length}`);
+            for (const exp of exports.slice(0, 10)) {
+              const defaultMarker = exp.isDefault ? ' (default)' : '';
+              const desc = exp.description ? ` - ${exp.description}` : '';
+              lines.push(`- \`${exp.name}\`${defaultMarker}${desc}`);
+            }
+            if (exports.length > 10) {
+              lines.push(`- *... and ${exports.length - 10} more*`);
+            }
+            lines.push('');
+          }
+        }
+      }
+
       lines.push('');
     }
+  }
+
+  if (summary.dependencies.circular.length > 0) {
+    lines.push('## Circular Dependencies');
+    lines.push('');
+    lines.push(`⚠️ Found ${summary.dependencies.circular.length} circular dependency chain(s):`);
+    lines.push('');
+    for (const cycle of summary.dependencies.circular) {
+      lines.push(`**Length ${cycle.length}**: ${cycle.path.join(' → ')}`);
+    }
+    lines.push('');
   }
 
   if (summary.dependencies.edges.length > 0) {
@@ -70,4 +103,19 @@ export function formatMarkdown(summary: ProjectSummary): string {
   }
 
   return lines.join('\n');
+}
+
+function groupExportsByType(exports: ExportInfo[]): Record<string, ExportInfo[]> {
+  const groups: Record<string, ExportInfo[]> = {};
+  for (const exp of exports) {
+    if (!groups[exp.type]) {
+      groups[exp.type] = [];
+    }
+    groups[exp.type].push(exp);
+  }
+  return groups;
+}
+
+function capitalize(str: string): string {
+  return str.charAt(0).toUpperCase() + str.slice(1);
 }

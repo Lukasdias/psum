@@ -3,17 +3,36 @@ export interface EntryPoint {
   type: 'cli' | 'server' | 'client' | 'library' | 'config' | 'unknown';
 }
 
+export interface ExportInfo {
+  name: string;
+  type: 'function' | 'class' | 'interface' | 'type' | 'const' | 'variable' | 'enum' | 'unknown';
+  path: string;
+  isDefault: boolean;
+  description?: string;
+}
+
 export interface Module {
   name: string;
   path: string;
   files: number;
   dependencies: string[];
-  exports: string[];
+  exports: ExportInfo[];
+}
+
+export interface DependencyEdge {
+  from: string;
+  to: string;
+}
+
+export interface CircularDependency {
+  path: string[];
+  length: number;
 }
 
 export interface DependencyGraph {
   nodes: string[];
-  edges: Array<{ from: string; to: string }>;
+  edges: DependencyEdge[];
+  circular: CircularDependency[];
 }
 
 export interface LanguageStats {

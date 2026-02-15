@@ -1,4 +1,4 @@
-import type { DependencyGraph } from '../types.js';
+import type { DependencyGraph, DependencyEdge, CircularDependency } from '../types.js';
 import { readFile } from 'node:fs/promises';
 import { join, dirname, relative } from 'node:path';
 
@@ -9,7 +9,7 @@ export async function buildDependencyGraph(
   root: string
 ): Promise<DependencyGraph> {
   const nodes = new Set<string>();
-  const edges: Array<{ from: string; to: string }> = [];
+  const edges: DependencyEdge[] = [];
 
   const batchSize = 20;
   for (let i = 0; i < files.length; i += batchSize) {
@@ -31,8 +31,8 @@ export async function buildDependencyGraph(
                 nodes.add(targetModule);
                 edges.push({ from: moduleName, to: targetModule });
               }
-            } else if (isLocalAlias(imp, root)) {
-              const resolved = resolveAliasImport(imp, root);
+            } else if (await isLocalAlias(imp, root)) {
+              const resolved = await resolveAliasImport(imp, root);
               if (resolved) {
                 const targetModule = getModuleName(resolved);
                 nodes.add(targetModule);
@@ -46,12 +46,72 @@ export async function buildDependencyGraph(
     );
   }
 
+  const uniqueEdges = edges.filter((e, i, self) =>
+    i === self.findIndex(t => t.from === e.from && t.to === e.to)
+  );
+
+  const circular = findCircularDependencies(uniqueEdges);
+
   return {
     nodes: Array.from(nodes),
-    edges: edges.filter((e, i, self) =>
-      i === self.findIndex(t => t.from === e.from && t.to === e.to)
-    ),
+    edges: uniqueEdges,
+    circular,
   };
+}
+
+function findCircularDependencies(edges: DependencyEdge[]): CircularDependency[] {
+  const cycles: CircularDependency[] = [];
+  const visited = new Set<string>();
+  const recursionStack = new Set<string>();
+
+  const validEdges = edges.filter(e => e.from !== e.to);
+
+  const adjacencyList = new Map<string, string[]>();
+  for (const edge of validEdges) {
+    if (!adjacencyList.has(edge.from)) {
+      adjacencyList.set(edge.from, []);
+    }
+    adjacencyList.get(edge.from)!.push(edge.to);
+  }
+
+  function dfs(node: string, path: string[]): void {
+    visited.add(node);
+    recursionStack.add(node);
+    path.push(node);
+
+    const neighbors = adjacencyList.get(node) || [];
+    for (const neighbor of neighbors) {
+      if (!visited.has(neighbor)) {
+        dfs(neighbor, path);
+      } else if (recursionStack.has(neighbor)) {
+        const cycleStart = path.indexOf(neighbor);
+        const cycle = path.slice(cycleStart);
+        if (cycle.length > 1) {
+          cycles.push({
+            path: [...cycle, neighbor],
+            length: cycle.length,
+          });
+        }
+      }
+    }
+
+    path.pop();
+    recursionStack.delete(node);
+  }
+
+  for (const node of adjacencyList.keys()) {
+    if (!visited.has(node)) {
+      dfs(node, []);
+    }
+  }
+
+  return cycles
+    .filter((cycle, index, self) =>
+      index === self.findIndex(c =>
+        JSON.stringify(c.path) === JSON.stringify(cycle.path)
+      )
+    )
+    .sort((a, b) => a.length - b.length);
 }
 
 function extractImports(content: string): string[] {

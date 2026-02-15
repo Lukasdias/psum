@@ -28,6 +28,7 @@ export async function scanProject(
     dependencies: {
       nodes: modules.map(m => m.name),
       edges: [],
+      circular: [],
     },
     stats,
     configFiles,
